@@ -6,8 +6,17 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/iWeslax83/prose)
 
+![PROSE demo — compile a sentence, run the graph, follow the Living Seam](docs/screenshots/prose-demo.gif)
+
 Think *SQL for general computation, but for agents*. You write what should happen; PROSE
 plans it, types it, runs it, verifies it, and lets you replay it deterministically.
+
+|  |  |
+|---|---|
+| ![Compiled task-graph](docs/screenshots/02-compiled.png) | ![The Living Seam](docs/screenshots/03-living-seam.png) |
+| **Compile** — a sentence becomes a typed graph (parse strip, schema chips, checksum tape). | **The Living Seam** — hover a node to stitch its intent clause → graph node → trace row. |
+| ![Live trace with real I/O](docs/screenshots/04-trace-io.png) | ![Empty instrument](docs/screenshots/01-empty.png) |
+| **Execute** — live trace with real tool I/O (here: actual Hacker News data) + durations. | **The instrument** — dark phosphor terminal, status-as-typography, zero decoration. |
 
 ```
 "Hacker News'te ilk 5 başlığı al, hepsini maddele, bir e-posta taslağı yap."
