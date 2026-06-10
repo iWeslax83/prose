@@ -86,7 +86,7 @@ function safeEval(expr: string): number {
     return s[i];
   }
   function number(): number {
-    let start = i;
+    const start = i;
     while (i < s.length && /[0-9.]/.test(s[i])) i++;
     if (start === i) throw new Error(`Sayı bekleniyordu @${i}`);
     return parseFloat(s.slice(start, i));
@@ -202,7 +202,7 @@ export const TOOLS: ToolDef<any>[] = [
     outputType: "HttpResponse",
     params: z.object({ url: z.string().url() }),
     describe: (p) => p.url,
-    run: async (p, ctx) => {
+    run: async (p) => {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
       try {

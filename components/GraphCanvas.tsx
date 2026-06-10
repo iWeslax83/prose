@@ -30,14 +30,12 @@ function paramSummary(node: TaskNode): string {
 export function GraphCanvas({
   graph,
   nodeStatus,
-  activeNodeId,
   selectedNodeId,
   onHoverNode,
   frozen,
 }: {
   graph: TaskGraph | null;
   nodeStatus: Record<string, StepStatus>;
-  activeNodeId: string | null;
   selectedNodeId: string | null;
   onHoverNode?: (id: string | null) => void;
   frozen?: boolean;

@@ -62,7 +62,6 @@ export default function Page() {
           <GraphCanvas
             graph={p.graph}
             nodeStatus={p.nodeStatus}
-            activeNodeId={p.activeNodeId}
             selectedNodeId={hoverNode}
             onHoverNode={setHoverNode}
             frozen={p.phase === "replay" && !p.running}

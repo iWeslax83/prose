@@ -50,6 +50,7 @@ export function useGraphLayout(graph: TaskGraph | null): Layout | null {
 
   useEffect(() => {
     if (!graph || graph.nodes.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLayout(null);
       return;
     }

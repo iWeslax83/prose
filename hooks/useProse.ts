@@ -91,6 +91,9 @@ export function useProse(): ProseState {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // client-only: localStorage is unavailable during SSR, so we hydrate runs
+    // here rather than in a useState initializer (which would mismatch on hydrate)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRuns(loadRuns());
     fetch("/api/compile")
       .then((r) => r.json())
