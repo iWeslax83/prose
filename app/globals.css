@@ -1,0 +1,176 @@
+/* ============================================================
+   PROSE — "The Living Seam"  ·  design tokens + base
+   A disciplined terminal instrument. Monospace structure,
+   hard 1px rules, glyph status, zero decoration.
+   ============================================================ */
+
+:root {
+  /* ── Color ── */
+  --bg-void: #0b0d0c;       /* app background — near-black, faint green cast */
+  --bg-panel: #121514;      /* raised surfaces */
+  --bg-sunken: #080a09;     /* inset wells */
+  --rule-hard: #2a2f2c;     /* 1px structural rules + box-drawing */
+  --rule-hover: #3e4642;    /* rule brightens on hover/active */
+  --ink-primary: #e6eae3;   /* primary text — warm off-white */
+  --ink-muted: #7e8a82;     /* secondary text, ids, timestamps */
+  --accent-signal: #7cffb2; /* THE live wire — running, seam pulse, cursor */
+  --state-ok: #46d38a;      /* verified / passed */
+  --state-warn: #e8b341;    /* retry / idempotent-skip / gate-waiting */
+  --state-err: #ff5c57;     /* failed / type error / checksum drift */
+  --accent-type: #56b6e0;   /* types, schema chips, data edges */
+  --accent-replay: #c8a2ff; /* replay time-axis ONLY — never a fill/gradient */
+
+  /* ── Fonts (vars provided by next/font in layout) ── */
+  --font-mono: var(--font-machine), ui-monospace, "SFMono-Regular", monospace;
+  --font-label: var(--font-display), var(--font-machine), monospace;
+  --font-human: var(--font-prose), ui-sans-serif, sans-serif;
+
+  /* ── Type scale ── */
+  --fs-wordmark: 18px;
+  --fs-header: 11px;
+  --fs-composer: 16px;
+  --fs-node-title: 13px;
+  --fs-node-id: 11px;
+  --fs-trace: 12px;
+  --fs-chip: 11px;
+  --fs-prose: 14px;
+  --tracking-label: 0.08em;
+  --tracking-wordmark: 0.06em;
+  --lh-tight: 1;
+  --lh-ui: 1.3;
+  --lh-composer: 1.5;
+  --lh-prose: 1.55;
+
+  /* ── Spacing (4px base) ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-16: 64px;
+
+  /* ── Structure ── */
+  --radius: 0;
+  --rule-w: 1px;
+  --row-trace: 28px;
+  --bar-status: 40px;
+  --dotgrid: 24px;
+
+  /* ── Motion ── */
+  --t-snap: 140ms;   /* discrete compile-state LED cuts */
+  --t-row: 120ms;    /* trace rows snap in */
+  --t-scrub: 180ms;
+  --blink: 530ms;    /* terminal cursor cadence */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-snap: 0ms;
+    --t-row: 0ms;
+    --t-scrub: 0ms;
+    --blink: 0ms;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  height: 100%;
+  color-scheme: dark;
+}
+
+html,
+body {
+  max-width: 100vw;
+}
+
+body {
+  min-height: 100%;
+  height: 100dvh;
+  color: var(--ink-primary);
+  background: var(--bg-void);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: var(--lh-tight);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; /* the instrument owns the viewport; panels scroll internally */
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent-signal) 30%, transparent);
+  color: var(--ink-primary);
+}
+
+/* ── Shared utilities ── */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* composer reads sentences literally — ligatures OFF */
+.ligatures-off {
+  font-feature-settings: "calt" 0, "liga" 0;
+}
+/* compiled code / manifest panels — ligatures ON */
+.ligatures-on {
+  font-feature-settings: "calt" 1, "liga" 1;
+}
+
+/* Martian Mono bracketed label — the only place display font is used */
+.label {
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: var(--fs-header);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* IBM Plex Sans — only sentence-shaped prose */
+.human {
+  font-family: var(--font-human);
+  font-size: var(--fs-prose);
+  line-height: var(--lh-prose);
+  color: var(--ink-muted);
+}
+
+/* focus: 1px signal corner-bracket feel, never removed outline */
+:focus-visible {
+  outline: 1px solid var(--accent-signal);
+  outline-offset: 1px;
+}
+
+/* thin instrument scrollbars */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--bg-sunken);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--rule-hard);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--rule-hover);
+}
