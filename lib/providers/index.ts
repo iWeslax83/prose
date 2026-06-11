@@ -7,7 +7,7 @@ export { CompileError } from "./types";
 
 /**
  * Select a compiler from the environment.
- *   PROSE_PROVIDER = mock | groq | openrouter | ollama | gemini   (default: mock)
+ *   PROSE_PROVIDER = mock | xai(grok) | groq | openrouter | ollama | gemini   (default: mock)
  * If a hosted provider is requested but its key is missing, we transparently use
  * the mock — so a fresh Vercel deploy with no env vars is fully functional.
  */

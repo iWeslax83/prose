@@ -119,6 +119,19 @@ export function makeLLMProvider(cfg: LLMConfig): Provider {
 
 export function llmConfigFromEnv(provider: string): LLMConfig | undefined {
   switch (provider) {
+    case "xai":
+    case "grok":
+      // xAI Grok — OpenAI-compatible. Keys start with "xai-".
+      return {
+        name: "grok",
+        flavor: "openai",
+        endpoint: "https://api.x.ai/v1/chat/completions",
+        model: process.env.PROSE_MODEL || "grok-2-1212",
+        apiKey:
+          process.env.XAI_API_KEY ||
+          process.env.GROK_API_KEY ||
+          process.env.GROQ_API_KEY,
+      };
     case "groq":
       return {
         name: "groq",
