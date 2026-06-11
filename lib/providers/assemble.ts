@@ -62,6 +62,10 @@ export function assembleFromSteps(
         const key = step.tool === "email" ? "body" : "text";
         if (params[key] === undefined) params[key] = `$${prev.id}`;
       }
+      // aggregate consumes the previous step's array
+      if (step.tool === "aggregate" && params.items === undefined) {
+        params.items = `$${prev.id}`;
+      }
     }
 
     // Drop malformed steps (e.g. math.eval with no expr) BEFORE they enter the

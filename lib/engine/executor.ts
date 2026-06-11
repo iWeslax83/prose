@@ -79,14 +79,11 @@ function resolveParams(
     if (typeof v === "string") {
       const m = v.match(/^\$(\w+)(?:\.(.+))?$/);
       if (m) {
+        // resolve to the REAL upstream value (array/object/number), not a string,
+        // so tools like aggregate can consume structured data. Text-shaped tools
+        // coerce to string themselves via their param schema.
         const upstream = outputs[m[1]];
-        const resolved = m[2] ? getField(upstream, m[2]) : upstream;
-        out[k] =
-          typeof resolved === "string"
-            ? resolved
-            : resolved === undefined
-              ? ""
-              : stableStringify(resolved);
+        out[k] = m[2] ? getField(upstream, m[2]) : upstream;
         continue;
       }
     }

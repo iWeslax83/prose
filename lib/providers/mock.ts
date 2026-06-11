@@ -211,6 +211,30 @@ export function compileMock(source: string): TaskGraph {
 
   /* ── 2. TRANSFORMS ── */
 
+  // aggregate over a previous array-producing step (mock: focused on HN scores)
+  if (
+    lastProducer &&
+    lastProducer.tool === "hackernews" &&
+    /(ortalama|average|topla|toplam|\bsum\b|en yüksek|en düşük|maksimum|minimum|medyan|median|kaç tane|adet)/.test(low)
+  ) {
+    let op = "mean";
+    if (/(topla|toplam|\bsum\b)/.test(low)) op = "sum";
+    else if (/(en yüksek|maksimum|\bmax\b|en fazla)/.test(low)) op = "max";
+    else if (/(en düşük|minimum|\bmin\b|en az)/.test(low)) op = "min";
+    else if (/(medyan|median)/.test(low)) op = "median";
+    else if (/(kaç tane|adet)/.test(low)) op = "count";
+    const prevId = lastProducer.id;
+    const seam = addClause(b, "transform", "AGGREGATE", `${op}(score)`);
+    lastProducer = addNode(
+      b,
+      seam,
+      "aggregate",
+      "compute",
+      { items: `$${prevId}`, field: "score", op },
+      { inputs: [prevId] },
+    );
+  }
+
   const wantsSummary = /(özet|summar|tek cümle|kısalt|madde|bullet|indir)/.test(low);
   if (wantsSummary && lastProducer) {
     const op = /(madde|bullet|indir)/.test(low) ? "bulletize" : "summarize";

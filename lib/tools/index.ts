@@ -33,6 +33,24 @@ const clampInt = (min: number, max: number, def: number) =>
     return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
   }, z.number().int().min(min).max(max));
 
+/**
+ * A text param that tolerates a structured upstream value: the executor now
+ * resolves `$ref` params to real arrays/objects, so text-shaped tools stringify
+ * here rather than relying on the resolver.
+ */
+const asText = z.preprocess(
+  (v) => (typeof v === "string" ? v : v == null ? "" : JSON.stringify(v, null, 2)),
+  z.string(),
+);
+
+/** Read a dotted path from an item (local to avoid an engine import). */
+function pluck(obj: unknown, path?: string): unknown {
+  if (!path) return obj;
+  return path
+    .split(".")
+    .reduce<unknown>((a, k) => (a && typeof a === "object" ? (a as Record<string, unknown>)[k] : undefined), obj);
+}
+
 async function getJSON(url: string, ctx: ToolContext): Promise<unknown> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
@@ -321,6 +339,66 @@ export const TOOLS: ToolDef<any>[] = [
     },
   } as ToolDef<{ country: string; year?: number }>,
   {
+    tool: "aggregate",
+    method: "compute",
+    outputType: "Aggregate",
+    params: z.object({
+      items: z.any().optional(), // a previous step's array (resolved via $ref)
+      values: z.array(z.coerce.number()).optional(), // or explicit numbers
+      field: z.string().optional(), // numeric field to pluck from each item
+      op: z
+        .enum(["mean", "sum", "min", "max", "median", "count"])
+        .default("mean")
+        .catch("mean"),
+    }),
+    describe: (p) => `${p.op ?? "mean"}${p.field ? `(${p.field})` : ""}`,
+    run: async (p) => {
+      const op = p.op ?? "mean";
+      const arr = Array.isArray(p.items)
+        ? p.items
+        : p.items && typeof p.items === "object"
+          ? Object.values(p.items as Record<string, unknown>)
+          : [];
+      if (op === "count") {
+        return { op, n: Array.isArray(p.values) ? p.values.length : arr.length };
+      }
+      let nums: number[];
+      if (Array.isArray(p.values) && p.values.length) {
+        nums = p.values.map(Number).filter(Number.isFinite);
+      } else {
+        nums = arr
+          .map((it) => Number(p.field ? pluck(it, p.field) : it))
+          .filter(Number.isFinite);
+      }
+      if (!nums.length) {
+        throw new Error(`Sayısal değer bulunamadı${p.field ? ` (alan: ${p.field})` : ""}`);
+      }
+      const sum = nums.reduce((a, b) => a + b, 0);
+      let value: number;
+      switch (op) {
+        case "sum":
+          value = sum;
+          break;
+        case "min":
+          value = Math.min(...nums);
+          break;
+        case "max":
+          value = Math.max(...nums);
+          break;
+        case "median": {
+          const s = [...nums].sort((a, b) => a - b);
+          const m = Math.floor(s.length / 2);
+          value = s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+          break;
+        }
+        case "mean":
+        default:
+          value = sum / nums.length;
+      }
+      return { op, field: p.field ?? null, n: nums.length, value: Math.round(value * 1000) / 1000 };
+    },
+  } as ToolDef<{ items?: unknown; values?: number[]; field?: string; op: string }>,
+  {
     tool: "datetime",
     method: "now",
     outputType: "DateTime",
@@ -366,7 +444,7 @@ export const TOOLS: ToolDef<any>[] = [
     method: "transform",
     outputType: "Text",
     params: z.object({
-      text: z.string(),
+      text: asText,
       op: z
         .enum(["upper", "lower", "trim", "summarize", "bulletize", "count"])
         .default("summarize")
@@ -407,7 +485,7 @@ export const TOOLS: ToolDef<any>[] = [
     params: z.object({
       to: z.string().default("me"),
       subject: z.string().default("PROSE özeti"),
-      body: z.string().default(""),
+      body: asText,
     }),
     describe: (p) => `to: ${p.to ?? "me"} · "${p.subject}"`,
     run: async (p) => ({

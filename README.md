@@ -58,6 +58,7 @@ Real, no-key data sources plus explicit **dry-run** side-effects (nothing is eve
 | `currency.convert` | frankfurter.app (ECB rates) |
 | `holidays.list` | date.nager.at (public holidays) |
 | `http.get` | any public URL |
+| `aggregate.compute` | mean/sum/min/max/median/count over a field |
 | `datetime.now` / `datetime.add`, `math.eval`, `text.transform` | local / pure |
 | `email.draft`, `calendar.reminder` | **dry-run** (recorded, never sent) |
 

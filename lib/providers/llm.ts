@@ -34,9 +34,12 @@ Rules:
 - Every required param must be present with a CONCRETE literal value. Param shapes:
   weather {place}; weather.forecast {place,days}; hackernews {limit}; wikipedia {title,lang};
   currency.convert {from,to,amount} (ISO codes e.g. USD,TRY,EUR); holidays.list {country,year} (e.g. TR,US);
-  text.transform {text,op:"summarize"|"bulletize"|"upper"|"lower"}; email.draft {subject,body}; calendar.reminder {title,when}.
+  text.transform {text,op:"summarize"|"bulletize"|"upper"|"lower"}; email.draft {subject,body}; calendar.reminder {title,when};
+  aggregate.compute {items,field,op:"mean"|"sum"|"min"|"max"|"median"|"count"}.
 - math.eval needs a LITERAL arithmetic string in {expr}, e.g. {"expr":"12*(3+4)"}. NEVER use math to
-  operate on another step's output and never leave expr empty — if there is no literal arithmetic, omit math entirely.`;
+  operate on another step's output and never leave expr empty — if there is no literal arithmetic, omit math entirely.
+- To average/sum/min/max a NUMERIC FIELD of a previous step's array, use aggregate.compute with
+  consumesPrevious:true and {field:"<name>", op:"mean"} (e.g. average HN scores: field "score"). Not math.`;
 }
 
 interface LLMConfig {

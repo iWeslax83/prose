@@ -28,4 +28,8 @@ export const SHOWCASE_INTENTS: { label: string; source: string }[] = [
     label: "resmi tatiller",
     source: "2026 yılı Türkiye resmi tatillerini listele.",
   },
+  {
+    label: "HN puan ortalaması",
+    source: "Hacker News'ten ilk 10 başlığı al ve puanlarının ortalamasını bul.",
+  },
 ];
