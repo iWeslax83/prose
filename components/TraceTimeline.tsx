@@ -46,6 +46,7 @@ function TraceRow({
   const [open, setOpen] = useState(false);
   // surface the final result automatically: when a terminal step settles, open it
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (autoOpen) setOpen(true);
   }, [autoOpen]);
   const glyph = STATUS_GLYPH[event.status];
