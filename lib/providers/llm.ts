@@ -31,8 +31,12 @@ Rules:
   previous step's output holds. op is one of exists|truthy|equals|gt|lt|contains.
 - kind is one of trigger|source|condition|action|transform.
 - Side-effect tools (email.draft, calendar.reminder) are dry-run; prefer them for "send/remind".
-- params must match the tool (e.g. weather needs {place}, hackernews {limit}, wikipedia {title,lang},
-  text.transform {op:"summarize"|"bulletize"|...}, email.draft {subject,body}, calendar.reminder {title,when}).`;
+- Every required param must be present with a CONCRETE literal value. Param shapes:
+  weather {place}; weather.forecast {place,days}; hackernews {limit}; wikipedia {title,lang};
+  currency.convert {from,to,amount} (ISO codes e.g. USD,TRY,EUR); holidays.list {country,year} (e.g. TR,US);
+  text.transform {text,op:"summarize"|"bulletize"|"upper"|"lower"}; email.draft {subject,body}; calendar.reminder {title,when}.
+- math.eval needs a LITERAL arithmetic string in {expr}, e.g. {"expr":"12*(3+4)"}. NEVER use math to
+  operate on another step's output and never leave expr empty — if there is no literal arithmetic, omit math entirely.`;
 }
 
 interface LLMConfig {

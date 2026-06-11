@@ -47,21 +47,13 @@ export function assembleFromSteps(
   const edges: TaskEdge[] = [];
   const clauses: Clause[] = [];
   let prev: TaskNode | undefined;
+  let seq = 0; // only increments for steps that survive validation
 
-  steps.forEach((step, i) => {
+  for (const step of steps) {
     const def = getTool(step.tool, step.method);
-    if (!def) throw new CompileError(`Bilinmeyen araç: ${step.tool}.${step.method}`);
+    if (!def) continue; // unknown tool -> drop rather than fail the whole plan
 
-    const seamId = (i + 1).toString().padStart(2, "0");
-    const kind = step.kind ?? inferKind(step.tool);
-    clauses.push({
-      seamId,
-      kind,
-      label: KIND_LABEL[kind],
-      value: `${step.tool}.${step.method}`,
-    });
-
-    const params = { ...(step.params ?? {}) };
+    const params: Record<string, unknown> = { ...(step.params ?? {}) };
     const inputs: string[] = [];
     if (step.consumesPrevious && prev) {
       inputs.push(prev.id);
@@ -70,6 +62,19 @@ export function assembleFromSteps(
         const key = step.tool === "email" ? "body" : "text";
         if (params[key] === undefined) params[key] = `$${prev.id}`;
       }
+    }
+
+    // Drop malformed steps (e.g. math.eval with no expr) BEFORE they enter the
+    // graph, so a sloppy LLM step can't hard-fail the run at execution time.
+    // $ref strings stay valid here (they satisfy string params and resolve at run).
+    if (!def.params.safeParse(params).success) continue;
+
+    // math.eval only evaluates LITERAL arithmetic. LLMs reach for it to "average"
+    // or "sum" another step's output (which PROSE has no aggregation tool for),
+    // leaving a non-arithmetic expr that fails at runtime. Drop those here.
+    if (step.tool === "math" && step.method === "eval") {
+      const expr = String((params as { expr?: unknown }).expr ?? "");
+      if (!/^[\d\s+\-*/%.()]+$/.test(expr) || !/\d/.test(expr)) continue;
     }
 
     let branch: Predicate | undefined;
@@ -83,8 +88,13 @@ export function assembleFromSteps(
       if (!inputs.includes(prev.id)) inputs.push(prev.id);
     }
 
+    seq += 1;
+    const seamId = seq.toString().padStart(2, "0");
+    const kind = step.kind ?? inferKind(step.tool);
+    clauses.push({ seamId, kind, label: KIND_LABEL[kind], value: `${step.tool}.${step.method}` });
+
     const node: TaskNode = {
-      id: `n${i + 1}`,
+      id: `n${seq}`,
       seamId,
       tool: step.tool,
       method: step.method,
@@ -110,9 +120,12 @@ export function assembleFromSteps(
       });
     }
 
-    if (node.tool !== "datetime" && node.tool !== "weather") prev = node;
-    else prev = node;
-  });
+    prev = node;
+  }
+
+  if (nodes.length === 0) {
+    throw new CompileError("Geçerli adım üretilemedi — niyeti yeniden ifade edin.");
+  }
 
   const sum = graphChecksum({ source, nodes, edges });
   return {
