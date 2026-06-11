@@ -26,6 +26,13 @@ export default function Page() {
   const hoverSeam = seamOf(hoverNode);
   const activeSeam = hoverSeam ?? runningSeam;
 
+  // terminal nodes (no outgoing edge) hold the run's result — auto-expand them
+  const resultNodeIds = useMemo(() => {
+    if (!p.graph) return [];
+    const hasOut = new Set(p.graph.edges.map((e) => e.from));
+    return p.graph.nodes.filter((n) => !hasOut.has(n.id)).map((n) => n.id);
+  }, [p.graph]);
+
   const tapeState: "idle" | "match" | "drift" =
     p.phase === "replay" && p.deterministic !== null
       ? p.deterministic
@@ -73,6 +80,8 @@ export default function Page() {
             trace={p.trace}
             highlightSeamId={activeSeam}
             onHoverNode={setHoverNode}
+            resultNodeIds={resultNodeIds}
+            running={p.running}
           />
         </div>
 

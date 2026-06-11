@@ -480,6 +480,26 @@
   border-left-color: var(--accent-signal);
   background: color-mix(in srgb, var(--accent-signal) 7%, transparent);
 }
+/* the run's result (terminal step) — auto-expanded + marked */
+.trace-result {
+  border-left-color: var(--accent-signal);
+}
+.trace-result > .trace-row {
+  position: relative;
+  background: color-mix(in srgb, var(--accent-signal) 8%, transparent);
+}
+.trace-result > .trace-row::after {
+  content: "= SONUÇ";
+  position: absolute;
+  right: var(--sp-3);
+  top: -7px;
+  font-family: var(--font-label);
+  font-size: 8px;
+  letter-spacing: var(--tracking-label);
+  color: var(--bg-void);
+  background: var(--accent-signal);
+  padding: 1px 5px;
+}
 .trace-row {
   width: 100%;
   height: var(--row-trace);

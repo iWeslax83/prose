@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { STATUS_COLOR, STATUS_GLYPH } from "@/lib/client/glyphs";
 import type { TraceEvent } from "@/lib/schema";
 
@@ -35,18 +35,24 @@ function IOWell({ event }: { event: TraceEvent }) {
 function TraceRow({
   event,
   highlighted,
+  autoOpen,
   onHover,
 }: {
   event: TraceEvent;
   highlighted: boolean;
+  autoOpen?: boolean;
   onHover?: (id: string | null) => void;
 }) {
   const [open, setOpen] = useState(false);
+  // surface the final result automatically: when a terminal step settles, open it
+  useEffect(() => {
+    if (autoOpen) setOpen(true);
+  }, [autoOpen]);
   const glyph = STATUS_GLYPH[event.status];
   const color = STATUS_COLOR[event.status];
   return (
     <div
-      className={`trace-group ${highlighted ? "trace-hi" : ""}`}
+      className={`trace-group ${highlighted ? "trace-hi" : ""} ${autoOpen ? "trace-result" : ""}`}
       data-seam-id={event.seamId}
       onMouseEnter={() => onHover?.(event.nodeId)}
       onMouseLeave={() => onHover?.(null)}
@@ -79,10 +85,15 @@ export function TraceTimeline({
   trace,
   highlightSeamId,
   onHoverNode,
+  resultNodeIds,
+  running,
 }: {
   trace: TraceEvent[];
   highlightSeamId?: string | null;
   onHoverNode?: (id: string | null) => void;
+  /** terminal nodes whose output is the run's result — auto-expanded when settled */
+  resultNodeIds?: string[];
+  running?: boolean;
 }) {
   return (
     <section className="trace-surface">
@@ -103,6 +114,11 @@ export function TraceTimeline({
                 key={e.nodeId}
                 event={e}
                 highlighted={highlightSeamId === e.seamId}
+                autoOpen={
+                  !running &&
+                  (e.status === "ok" || e.status === "error") &&
+                  !!resultNodeIds?.includes(e.nodeId)
+                }
                 onHover={onHoverNode}
               />
             ))}
