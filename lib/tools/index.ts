@@ -22,6 +22,17 @@ export interface ToolDef<P = Record<string, unknown>> {
 
 const TIMEOUT = 8000;
 
+/**
+ * A bounded integer that CLAMPS out-of-range input instead of rejecting it.
+ * LLM compilers happily emit `limit: 50`; clamping is friendlier than a hard
+ * type error and keeps the run going. Non-numbers fall back to `def`.
+ */
+const clampInt = (min: number, max: number, def: number) =>
+  z.preprocess((v) => {
+    const n = Math.round(Number(v));
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+  }, z.number().int().min(min).max(max));
+
 async function getJSON(url: string, ctx: ToolContext): Promise<unknown> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
@@ -165,7 +176,7 @@ export const TOOLS: ToolDef<any>[] = [
     tool: "weather",
     method: "forecast",
     outputType: "Forecast",
-    params: z.object({ place: z.string(), days: z.number().min(1).max(7).default(3) }),
+    params: z.object({ place: z.string(), days: clampInt(1, 7, 3) }),
     describe: (p) => `place: "${p.place}", days: ${p.days ?? 3}`,
     run: async (p, ctx) => {
       const loc = await geocode(p.place, ctx);
@@ -241,7 +252,7 @@ export const TOOLS: ToolDef<any>[] = [
     tool: "hackernews",
     method: "top",
     outputType: "HNStory[]",
-    params: z.object({ limit: z.number().min(1).max(15).default(5) }),
+    params: z.object({ limit: clampInt(1, 15, 5) }),
     describe: (p) => `limit: ${p.limit ?? 5}`,
     run: async (p, ctx) => {
       const limit = p.limit ?? 5;
@@ -310,7 +321,10 @@ export const TOOLS: ToolDef<any>[] = [
     outputType: "Text",
     params: z.object({
       text: z.string(),
-      op: z.enum(["upper", "lower", "trim", "summarize", "bulletize", "count"]).default("summarize"),
+      op: z
+        .enum(["upper", "lower", "trim", "summarize", "bulletize", "count"])
+        .default("summarize")
+        .catch("summarize"),
     }),
     describe: (p) => `op: ${p.op ?? "summarize"}`,
     run: async (p) => {
@@ -344,7 +358,11 @@ export const TOOLS: ToolDef<any>[] = [
     method: "draft",
     outputType: "EmailDraft",
     dryRun: true,
-    params: z.object({ to: z.string().default("me"), subject: z.string(), body: z.string() }),
+    params: z.object({
+      to: z.string().default("me"),
+      subject: z.string().default("PROSE özeti"),
+      body: z.string().default(""),
+    }),
     describe: (p) => `to: ${p.to ?? "me"} · "${p.subject}"`,
     run: async (p) => ({
       drafted: true,
@@ -360,7 +378,10 @@ export const TOOLS: ToolDef<any>[] = [
     method: "reminder",
     outputType: "Reminder",
     dryRun: true,
-    params: z.object({ title: z.string(), when: z.string().default("monday 09:00") }),
+    params: z.object({
+      title: z.string().default("PROSE hatırlatıcı"),
+      when: z.string().default("monday 09:00"),
+    }),
     describe: (p) => `"${p.title}" @ ${p.when ?? "monday 09:00"}`,
     run: async (p) => ({
       scheduled: false,

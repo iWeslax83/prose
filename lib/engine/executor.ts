@@ -179,8 +179,14 @@ export async function execute(
         if (opts.signal?.aborted) break;
         try {
           if (!def) throw new Error(`Bilinmeyen araç: ${node.tool}.${node.method}`);
-          const parsed = def.params.parse(resolved);
-          output = await def.run(parsed, { signal: opts.signal });
+          const pr = def.params.safeParse(resolved);
+          if (!pr.success) {
+            const first = pr.error.issues[0];
+            throw new Error(
+              `tip hatası: ${first.path.join(".") || node.tool} — ${first.message}`,
+            );
+          }
+          output = await def.run(pr.data, { signal: opts.signal });
           succeeded = true;
           break;
         } catch (err) {
