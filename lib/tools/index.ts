@@ -252,10 +252,10 @@ export const TOOLS: ToolDef<any>[] = [
     tool: "hackernews",
     method: "top",
     outputType: "HNStory[]",
-    params: z.object({ limit: clampInt(1, 15, 5) }),
-    describe: (p) => `limit: ${p.limit ?? 5}`,
+    params: z.object({ limit: clampInt(1, 50, 10) }),
+    describe: (p) => `limit: ${p.limit ?? 10}`,
     run: async (p, ctx) => {
-      const limit = p.limit ?? 5;
+      const limit = p.limit ?? 10;
       const ids = (await getJSON(
         "https://hacker-news.firebaseio.com/v0/topstories.json",
         ctx,
