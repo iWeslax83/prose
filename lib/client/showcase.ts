@@ -20,4 +20,12 @@ export const SHOWCASE_INTENTS: { label: string; source: string }[] = [
     source:
       "Her cumartesi takvime bak; hafta sonuysa pazartesi sabahı bana özet hatırlatıcı at.",
   },
+  {
+    label: "döviz + e-posta",
+    source: "Bugün 100 dolar kaç TL eder? Sonucu bana bir e-posta taslağı olarak yaz.",
+  },
+  {
+    label: "resmi tatiller",
+    source: "2026 yılı Türkiye resmi tatillerini listele.",
+  },
 ];

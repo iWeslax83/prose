@@ -275,6 +275,52 @@ export const TOOLS: ToolDef<any>[] = [
     },
   } as ToolDef<{ limit: number }>,
   {
+    tool: "currency",
+    method: "convert",
+    outputType: "Currency",
+    params: z.object({
+      from: z.string().default("USD"),
+      to: z.string().default("TRY"),
+      amount: z.coerce.number().default(1).catch(1),
+    }),
+    describe: (p) => `${p.amount ?? 1} ${(p.from ?? "USD").toUpperCase()} → ${(p.to ?? "TRY").toUpperCase()}`,
+    run: async (p, ctx) => {
+      const from = (p.from ?? "USD").toUpperCase().slice(0, 3);
+      const to = (p.to ?? "TRY").toUpperCase().slice(0, 3);
+      const amount = p.amount ?? 1;
+      if (from === to) return { from, to, amount, rate: 1, result: amount, date: "—" };
+      const data = (await getJSON(
+        `https://api.frankfurter.app/latest?amount=${amount}&from=${from}&to=${to}`,
+        ctx,
+      )) as { amount: number; base: string; date: string; rates?: Record<string, number> };
+      const result = data.rates?.[to];
+      if (result === undefined) throw new Error(`Kur bulunamadı: ${from} → ${to}`);
+      return { from, to, amount, rate: result / amount, result, date: data.date };
+    },
+  } as ToolDef<{ from: string; to: string; amount: number }>,
+  {
+    tool: "holidays",
+    method: "list",
+    outputType: "Holiday[]",
+    params: z.object({ country: z.string().default("TR"), year: z.coerce.number().int().optional() }),
+    describe: (p) => `${(p.country ?? "TR").toUpperCase()} · ${p.year ?? "bu yıl"}`,
+    run: async (p, ctx) => {
+      const country = (p.country ?? "TR").toUpperCase().slice(0, 2);
+      const year = p.year ?? new Date().getFullYear();
+      const data = (await getJSON(
+        `https://date.nager.at/api/v3/PublicHolidays/${year}/${country}`,
+        ctx,
+      )) as Array<{ date: string; localName: string; name: string }>;
+      if (!Array.isArray(data)) throw new Error(`Tatil verisi yok: ${country} ${year}`);
+      return {
+        country,
+        year,
+        count: data.length,
+        holidays: data.map((h) => ({ date: h.date, name: h.name, localName: h.localName })),
+      };
+    },
+  } as ToolDef<{ country: string; year?: number }>,
+  {
     tool: "datetime",
     method: "now",
     outputType: "DateTime",

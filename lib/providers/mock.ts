@@ -154,18 +154,59 @@ export function compileMock(source: string): TaskGraph {
     });
   }
 
-  // datetime (calendar-like trigger)
-  if (!lastProducer && /(takvim|calendar|cumartesi|pazartesi|hafta\s?sonu|bugün|tarih|date|saat)/.test(low)) {
-    const seam = addClause(b, "trigger", "TRIGGER", "zaman / takvim");
-    lastProducer = addNode(b, seam, "datetime", "now", {});
-  }
-
   // math
   // capture full arithmetic incl. parentheses, e.g. "12 * (3 + 4)"
   const mathExpr = raw.match(/[\d(][\d\s+\-*/%().]*[-+*/%][\d\s+\-*/%().]*[\d)]/);
   if (mathExpr && /(hesapla|kaç|topla|çarp|calculate|sum|=|\?)/.test(low)) {
     const seam = addClause(b, "source", "COMPUTE", mathExpr[0].trim());
     lastProducer = addNode(b, seam, "math", "eval", { expr: mathExpr[0].trim() });
+  }
+
+  // currency / exchange rate
+  if (
+    /(dolar|euro|sterlin|kur|döviz|currency|exchange|usd|eur|gbp|chf|\btl\b|lira)/.test(low) &&
+    /(kaç|çevir|convert|ne kadar|fiyat|rate|eder|karşılığ)/.test(low)
+  ) {
+    const CUR: Record<string, string> = {
+      dolar: "USD", usd: "USD", euro: "EUR", eur: "EUR", sterlin: "GBP", pound: "GBP",
+      gbp: "GBP", lira: "TRY", "tl": "TRY", "try": "TRY", frank: "CHF", chf: "CHF",
+      yen: "JPY", jpy: "JPY",
+    };
+    const found: string[] = [];
+    for (const [word, code] of Object.entries(CUR)) {
+      if (new RegExp(`\\b${word}\\b`).test(low) && !found.includes(code)) found.push(code);
+    }
+    const from = found[0] ?? "USD";
+    const to = found[1] ?? (from === "TRY" ? "USD" : "TRY");
+    const amountM = raw.match(/\b(\d{1,9})\b/);
+    const amount = amountM ? parseInt(amountM[1], 10) : 1;
+    const seam = addClause(b, "source", "CURRENCY", `${amount} ${from}→${to}`);
+    lastProducer = addNode(b, seam, "currency", "convert", { from, to, amount });
+  }
+
+  // public holidays
+  if (/(resmi tatil|tatil|bayram|public holiday|\bholiday)/.test(low)) {
+    const yearM = raw.match(/\b(20\d{2})\b/);
+    const year = yearM ? parseInt(yearM[1], 10) : undefined;
+    let country = "TR";
+    if (/(amerika|abd|usa|united states)/.test(low)) country = "US";
+    else if (/(almanya|germany)/.test(low)) country = "DE";
+    else if (/(ingiltere|birleşik krallık|\buk\b|britain)/.test(low)) country = "GB";
+    else if (/(fransa|france)/.test(low)) country = "FR";
+    const seam = addClause(b, "source", "HOLIDAYS", `${country}${year ? " · " + year : ""}`);
+    lastProducer = addNode(
+      b,
+      seam,
+      "holidays",
+      "list",
+      year !== undefined ? { country, year } : { country },
+    );
+  }
+
+  // datetime (calendar-like trigger) — only as a fallback when nothing else matched
+  if (!lastProducer && /(takvim|calendar|cumartesi|pazartesi|hafta\s?sonu|bugün|tarih|date|saat)/.test(low)) {
+    const seam = addClause(b, "trigger", "TRIGGER", "zaman / takvim");
+    lastProducer = addNode(b, seam, "datetime", "now", {});
   }
 
   /* ── 2. TRANSFORMS ── */
